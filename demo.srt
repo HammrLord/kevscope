@@ -1,0 +1,39 @@
+1
+00:00:00,000 --> 00:00:08,004
+Find the nine hundred microsecond stall hiding in a two gigabyte QNX trace. This is kevscope.
+
+2
+00:00:08,594 --> 00:00:20,576
+QNX traces of a gigabyte or more can crash the toolkit viewer. But a one kilohertz control loop only has a thousand microseconds per cycle, and a single nine hundred microsecond stall is a missed deadline.
+
+3
+00:00:21,203 --> 00:00:29,206
+Instead of scrolling a timeline by hand, kevscope streams the trace and tells you the answer.
+
+4
+00:00:30,121 --> 00:00:37,750
+Here's a trace from a two CPU robot controller, in traceprinter's text format. It streams through in a fraction of a second.
+
+5
+00:00:37,750 --> 00:00:52,256
+The findings say it plainly. The control loop missed nine deadlines, the worst by nine hundred and six microseconds, and every time the CPU was held by the logger thread. It even suggests the fix: raise the priority, or move the logger with a runmask.
+
+6
+00:00:52,256 --> 00:01:01,332
+The timeline opens right on the worst stall. The logger's burst on CPU zero holds off the control loop until it finishes. Zoom out to see the pattern repeat.
+
+7
+00:01:01,332 --> 00:01:12,924
+Per thread latency: a median of eleven microseconds, and a red tail of misses over the hundred microsecond budget. Interrupt and kernel call timing are here too, including message send round trips.
+
+8
+00:01:13,729 --> 00:01:27,096
+And a twenty minute codelab walks any QNX developer through it: boot QNX 8 in QEMU, build a sample control loop, capture with tracelogger, convert with traceprinter, find the culprit, fix it, and prove the fix.
+
+9
+00:01:27,790 --> 00:01:36,790
+Two point two million events in under two seconds, with a twenty six megabyte heap that doesn't grow with the file.
+
+10
+00:01:37,397 --> 00:01:45,400
+kevscope. Stop scrolling the timeline. Ask it who missed the deadline.
