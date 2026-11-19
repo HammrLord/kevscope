@@ -1,0 +1,1 @@
+{"type":"module","name":"kevscope","version":"0.1.0","bin":{"kevscope":"cli/kevscope.mjs"},"scripts":{"test":"node --test test/*.test.mjs","sample":"node tools/gen_sample.mjs sample/robot_trace.txt 2"}}

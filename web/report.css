@@ -1,0 +1,10 @@
+:root{--bg:#0B0F17;--card:#111827;--line:#1F2937;--t:#E5E7EB;--m:#8B98AD;--cy:#22D3EE;--am:#F59E0B;--rd:#F43F5E;--gr:#22C55E}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px/1.5 Inter,-apple-system,Segoe UI,Arial,sans-serif}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:0 0 16px}.kpis div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}.kpis b{display:block;font-size:24px;font-variant-numeric:tabular-nums}.kpis span{font-size:12px;color:var(--m)}.kpis .bad b{color:var(--rd)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px;position:relative}.card h3{margin:0 0 12px;font-size:15px}.row{display:flex;justify-content:space-between;align-items:center}.hint{color:var(--m);font-size:12px}
+.finds{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.find{border-radius:12px;padding:12px 14px;background:#0E141F;border:1px solid var(--line)}.find.high{border-color:#5B1A28;background:#1A0E14}.find.high b{color:#FDA4AF}.find p{margin:4px 0 0;color:#C3CCD9;font-size:13px}.find p b{color:#fff}
+canvas{width:100%;display:block;border-radius:10px}.tip{position:absolute;background:#0B0F17;border:1px solid #334155;padding:8px 10px;border-radius:8px;font-size:12px;pointer-events:none;z-index:3}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:12px;color:var(--m)}.legend i,.tbl i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+.grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}.tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl th{text-align:left;color:var(--m);font-weight:600;padding:6px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap}.tbl td{padding:6px;border-bottom:1px solid #151D2A;font-variant-numeric:tabular-nums}
+.tbl tr.sel td{background:#13223A}.tbl tr.warn td:last-child{color:var(--rd);font-weight:700}.tbl tbody tr{cursor:pointer}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2,.finds{grid-template-columns:1fr}}

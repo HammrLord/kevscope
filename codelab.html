@@ -1,0 +1,55 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>kevscope Codelab</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="web/report.css">
+<style>main{max-width:880px;margin:auto;padding:32px 20px 60px}h1{font-size:34px;margin:0 0 8px}h2{margin:34px 0 8px;font-size:21px;display:flex;gap:10px;align-items:center}.n{width:30px;height:30px;border-radius:50%;background:var(--cy);color:#0B0F17;display:grid;place-items:center;font-size:14px;font-weight:800}
+p,li{color:#C3CCD9}pre{background:#0E141F;border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow:auto;position:relative;font:13px/1.55 ui-monospace,Menlo,monospace;color:#E5E7EB}pre button{position:absolute;top:8px;right:8px;background:#1F2937;color:#fff;border:0;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 20px}.meta span{background:#111827;border:1px solid var(--line);border-radius:99px;padding:4px 12px;font-size:13px;color:var(--m)}.note{background:#1A1508;border:1px solid #4A3A0B;border-radius:12px;padding:12px 14px;color:#FCD34D;font-size:14px}
+a{color:var(--cy)}.toc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 20px}.toc li{margin:4px 0}</style></head>
+<body><main>
+<p><a href="index.html">← kevscope</a></p>
+<h1>Find a real-time deadline miss on QNX 8.0 in 20 minutes</h1>
+<div class="meta"><span>⏱ 20 min</span><span>QNX SDP 8.0 + QEMU quick-start image</span><span>Level: beginner</span><span>Tools: tracelogger · traceprinter · kevscope</span></div>
+<div class="note">Draft codelab for the QNX Global Hackathon. Commands follow the QNX 8.0 documentation; each step is being re-verified on a fresh SDP 8.0 install.</div>
+<div class="toc"><b>You will</b><ol><li>Boot a QNX 8.0 target in QEMU</li><li>Build and run a 1 kHz control loop with a misbehaving logger</li><li>Capture a kernel trace with <code>tracelogger</code></li><li>Convert it with <code>traceprinter</code></li><li>Let kevscope find the missed deadlines and the thread that caused them</li><li>Fix it and prove the fix</li></ol></div>
+
+<h2><span class="n">1</span>Boot a QNX 8.0 target</h2>
+<p>Install SDP 8.0 with the free non-commercial licence (myQNX → QNX Software Center), then add the <b>Quick Start Target Image for QEMU</b>. On macOS, use the official Docker build environment (<a href="https://gitlab.com/qnx/projects/docker-mac">qnx/projects/docker-mac</a>).</p>
+<pre><button>copy</button>source ~/qnx800/qnxsdp-env.sh
+mkdir ~/qnx-vm && cd ~/qnx-vm
+mkqnximage --arch=x86_64 --run</pre>
+<p>Tracing needs the instrumented kernel (<code>procnto-smp-instr</code>), which the quick-start images use.</p>
+
+<h2><span class="n">2</span>Build the sample workload</h2>
+<p><code>examples/rtloop.c</code> runs a 1 kHz control loop and a same-priority FIFO "logger" that burns 2.5 ms every 200 ms.</p>
+<pre><button>copy</button>git clone https://github.com/HammrLord/kevscope && cd kevscope
+qcc -Vgcc_ntox86_64 -o rtloop examples/rtloop.c
+scp rtloop root@&lt;target-ip&gt;:/tmp/</pre>
+
+<h2><span class="n">3</span>Capture a trace</h2>
+<pre><button>copy</button># on the target
+/tmp/rtloop &amp;
+tracelogger -n 20 -f /tmp/rtloop.kev
+# copy it back to the host
+scp root@&lt;target-ip&gt;:/tmp/rtloop.kev .</pre>
+<p><code>tracelogger</code> must run as root. <code>-n</code> sets how many buffers to capture.</p>
+
+<h2><span class="n">4</span>Convert to text</h2>
+<pre><button>copy</button>traceprinter -f rtloop.kev &gt; rtloop.txt</pre>
+<p>Multi-gigabyte <code>.kev</code> files can overwhelm GUI viewers. kevscope reads the text stream line by line, so size doesn't matter.</p>
+
+<h2><span class="n">5</span>Analyse with kevscope</h2>
+<pre><button>copy</button>node cli/kevscope.mjs rtloop.txt -o report.html
+# or stream directly:
+traceprinter -f rtloop.kev | node cli/kevscope.mjs - -o report.html</pre>
+<p>Open <code>report.html</code>, or drop <code>rtloop.txt</code> on the <a href="index.html">web version</a>. Look at <b>Findings</b>: kevscope reports how many times <code>ctl_loop</code> waited more than 100 µs between READY and RUNNING, the worst wait, and which thread held the CPU (expected: <code>flush</code>). The timeline opens on the worst stall.</p>
+
+<h2><span class="n">6</span>Fix it and prove it</h2>
+<p>Give the control loop a higher priority than the logger (or pin the logger elsewhere with a runmask), rebuild, and re-capture:</p>
+<pre><button>copy</button>sed -i 's/set_name_prio("ctl_loop", 20)/set_name_prio("ctl_loop", 30)/' examples/rtloop.c
+qcc -Vgcc_ntox86_64 -o rtloop examples/rtloop.c   # then repeat steps 3–5</pre>
+<p>The deadline-miss count should drop to zero and the latency histogram should lose its red tail. That's your before/after evidence.</p>
+
+<h2><span class="n">✓</span>What you learned</h2>
+<ul><li>How FIFO scheduling at equal priority lets a background thread starve a real-time loop</li><li>How to capture and convert QNX kernel traces</li><li>How to read scheduling latency (READY→RUNNING), IRQ and kernel-call timing</li></ul>
+</main>
+<script>document.querySelectorAll("pre button").forEach(b=>b.onclick=()=>{navigator.clipboard.writeText(b.parentElement.innerText.replace(/^copy\n/,""));b.textContent="copied";setTimeout(()=>b.textContent="copy",1200)})</script>
+</body></html>
